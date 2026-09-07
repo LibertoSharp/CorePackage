@@ -1,14 +1,6 @@
 {
   "name": "com.liberto.core",
   "version": "1.0.0",
-  "displayName": "My Core Utilities",
-  "description": "Shared scripts across projects",
-  "unity": "6000.3"
-}
-
-{
-  "name": "com.liberto.core",
-  "version": "1.0.0",
   "displayName": "Liberto Core",
   "description": "Shared scripts across projects",
   "unity": "6000.3",
