@@ -22,6 +22,5 @@ public static class VectorExtensions
     }
 
     public static Vector2Int ToInt(this Vector2 v) => new Vector2Int((int)v.x, (int)v.y);
-
     public static Vector3 WithCenter(this Vector3 v, Vector3 center) => v - center;
 }
