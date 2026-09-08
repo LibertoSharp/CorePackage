@@ -3,8 +3,14 @@ using UnityEngine;
 
 public partial class LazySingleton<T> : MonoBehaviour where T : LazySingleton<T>
 {
-    [AutoStaticsCleanup]
     protected static T _instance = null;
+	
+	[RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+    private static void ResetStatics()
+    {
+        _instance = null;
+    }
+	
     public static T Instance
     {
         get
