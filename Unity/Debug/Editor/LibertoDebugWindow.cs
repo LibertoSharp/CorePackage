@@ -6,6 +6,7 @@ using System.Collections.Generic;
 
 public class LibertoDebugWindow : EditorWindow
 {
+    private IVisualElementScheduledItem _updateSchedule;
     private VisualTreeAsset _baseModel;
     private VisualTreeAsset _watchElement;
 
@@ -13,6 +14,26 @@ public class LibertoDebugWindow : EditorWindow
 
     private static readonly Color ColorDark = new Color(0.18f, 0.18f, 0.18f, 1f);
     private static readonly Color ColorGray = new Color(0.24f, 0.24f, 0.24f, 1f);
+
+    private void OnEnable()
+    {
+        EditorApplication.playModeStateChanged += OnPlayModeStateChanged;
+    }
+
+    private void OnDisable()
+    {
+        EditorApplication.playModeStateChanged -= OnPlayModeStateChanged;
+        _updateSchedule?.Pause();
+    }
+
+    private void OnPlayModeStateChanged(PlayModeStateChange state)
+    {
+        if (state == PlayModeStateChange.ExitingPlayMode || state == PlayModeStateChange.EnteredEditMode)
+        {
+            _updateSchedule?.Pause();
+            _activeWatches.Clear();
+        }
+    }
 
     public static void ShowWindow()
     {
@@ -25,23 +46,23 @@ public class LibertoDebugWindow : EditorWindow
     {
         RebuildUI();
 
-        rootVisualElement.schedule.Execute(() =>
-        {
-            foreach (var (label, getter) in _activeWatches)
+        _activeWatches.Clear();
+        _updateSchedule = rootVisualElement.schedule.Execute(() =>
             {
-                if (label != null)
+                foreach (var (label, getter) in _activeWatches)
                 {
-                    object val = getter();
-                    label.text = val != null ? val.ToString() : "null";
+                    if (label != null)
+                    {
+                        object val = getter();
+                        label.text = val != null ? val.ToString() : "null";
+                    }
                 }
-            }
-        }).Every(100);
+            }).Every(100);
     }
 
     public void RebuildUI()
     {
         rootVisualElement.Clear();
-        _activeWatches.Clear();
 
         if (_baseModel == null)
             _baseModel = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>("Packages/com.liberto.core/Unity/Debug/UXML/DebugScreen.uxml");
@@ -60,13 +81,13 @@ public class LibertoDebugWindow : EditorWindow
         foreach ((string Name, Func<object> Getter) watch in LibertoDebug.Instance.Watches)
         {
             VisualElement watchInstance = _watchElement.Instantiate();
-            
+
             watchInstance.style.backgroundColor = (index % 2 == 0) ? ColorDark : ColorGray;
             index++;
 
             watchInstance.Q<Label>("name").text = watch.Name;
             Label valueLabel = watchInstance.Q<Label>("value");
-            
+
             watchesContainer.Add(watchInstance);
             _activeWatches.Add((valueLabel, watch.Getter));
         }
