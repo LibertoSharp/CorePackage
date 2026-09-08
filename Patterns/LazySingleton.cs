@@ -1,15 +1,9 @@
 using Unity.Scripting.LifecycleManagement;
 using UnityEngine;
 
-public partial class LazySingleton<T> : MonoBehaviour where T : LazySingleton<T>
+public class LazySingleton<T> : MonoBehaviour where T : LazySingleton<T>
 {
     protected static T _instance = null;
-	
-	[RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
-    private static void ResetStatics()
-    {
-        _instance = null;
-    }
 	
     public static T Instance
     {
