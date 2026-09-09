@@ -2,7 +2,7 @@ using UnityEngine;
 using System;
 using System.Collections;
 
-public static class Interpolations : LazySingleton<Interpolation>
+public class Interpolations : LazySingleton<Interpolation>
 {
 	 public enum Type
     {
