@@ -11,13 +11,24 @@ public class Interpolations : LazySingleton<Interpolations>
         EASE_OUT,
         SMOOTH_STEP
     }
+	private Dictionary<string, Coroutine> _activeCoroutines = new();
+	
+	public void Reach(float start, float target, float seconds, Type type, Action<float> onUpdate)
+	{
+		StartCoroutine(ReachCoroutine(null, start, target, seconds, type, onUpdate));
+	}
 
-    public void Reach(float start, float target, float seconds, Type type, Action<float> onUpdate)
+	public void Reach(string id, float start, float target, float seconds, Type type, Action<float> onUpdate)
     {
-        StartCoroutine(ReachCoroutine(start, target, seconds, type, onUpdate));
+        if (_activeCoroutines.TryGetValue(id, out Coroutine existingCoroutine))
+        {
+            StopCoroutine(existingCoroutine);
+        }
+
+        _activeCoroutines[id] = StartCoroutine(ReachCoroutine(id, start, target, seconds, type, onUpdate));
     }
 
-    private IEnumerator ReachCoroutine(float start, float target, float seconds, Type type, Action<float> onUpdate)
+	private IEnumerator ReachCoroutine(string id, float start, float target, float seconds, Type type, Action<float> onUpdate)
     {
         float elapsed = 0f;
 
@@ -32,6 +43,10 @@ public class Interpolations : LazySingleton<Interpolations>
         }
 
         onUpdate?.Invoke(target);
+        
+		if (!string.IsNullOrEmpty(id))
+			_activeCoroutines.Remove(id);
+		
     }
 
     private float ApplyEasing(float t, Type type)
