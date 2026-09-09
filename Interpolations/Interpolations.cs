@@ -31,7 +31,11 @@ public class Interpolations : LazySingleton<Interpolations>
 
 	private IEnumerator ReachCoroutine(string id, float start, float target, float seconds, Type type, Action<float> onUpdate, float waitSeconds)
     {
-		yield return new WaitForSeconds(waitSeconds);
+        if (waitSeconds > 0)
+        {
+            onUpdate?.Invoke(start);
+            yield return new WaitForSeconds(waitSeconds);
+        }
         float elapsed = 0f;
 
         while (elapsed < seconds)
