@@ -7,6 +7,8 @@ public static class VectorExtensions
      public static Vector2 ToXY(this Vector3 v) => new Vector2(v.x, v.z);
     public static Vector2 SwapXY(this Vector2 v) => new Vector2(v.y, v.x);
     public static Vector3 WithY(this Vector3 v, float newY) => new Vector3(v.x, newY, v.z);
+	public static Vector3 WithX(this Vector3 v, float newX) => new Vector3(newX, v.y, v.z);
+	public static Vector3 WithZ(this Vector3 v, float newZ) => new Vector3(v.x, v.y, newZ);
     public static Vector3 Avarage(this IEnumerable<Vector3> vecs)
     {
         Vector3 result = Vector3.zero;
