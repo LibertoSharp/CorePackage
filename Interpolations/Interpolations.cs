@@ -14,23 +14,24 @@ public class Interpolations : LazySingleton<Interpolations>
     }
 	private Dictionary<string, Coroutine> _activeCoroutines = new();
 	
-	public void Reach(float start, float target, float seconds, Type type, Action<float> onUpdate)
+	public void Reach(float start, float target, float seconds, Type type, Action<float> onUpdate, float waitSeconds = 0)
 	{
-		StartCoroutine(ReachCoroutine(null, start, target, seconds, type, onUpdate));
+		StartCoroutine(ReachCoroutine(null, start, target, seconds, type, onUpdate, waitSeconds));
 	}
 
-	public void Reach(string id, float start, float target, float seconds, Type type, Action<float> onUpdate)
+	public void Reach(string id, float start, float target, float seconds, Type type, Action<float> onUpdate, float waitSeconds = 0)
     {
         if (_activeCoroutines.TryGetValue(id, out Coroutine existingCoroutine))
         {
             StopCoroutine(existingCoroutine);
         }
 
-        _activeCoroutines[id] = StartCoroutine(ReachCoroutine(id, start, target, seconds, type, onUpdate));
+        _activeCoroutines[id] = StartCoroutine(ReachCoroutine(id, start, target, seconds, type, onUpdate, waitSeconds));
     }
 
-	private IEnumerator ReachCoroutine(string id, float start, float target, float seconds, Type type, Action<float> onUpdate)
+	private IEnumerator ReachCoroutine(string id, float start, float target, float seconds, Type type, Action<float> onUpdate, float waitSeconds)
     {
+		yield return new WaitForSeconds(waitSeconds);
         float elapsed = 0f;
 
         while (elapsed < seconds)
