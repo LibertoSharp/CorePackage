@@ -1,58 +1,69 @@
-using UnityEngine;
 using System;
-using System.Collections.Generic;
 using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+
+public struct InterpolationInfo
+{
+    public float StartValue;
+    public float TargetValue;
+    public float Seconds;
+    public Interpolations.Type InterpolationType;
+    public Action<float> UpdateValue;
+    public float WaitSeconds;
+    public Action<float> OnInterpolationEnd;
+    public string? StringID;
+}
 
 public class Interpolations : LazySingleton<Interpolations>
 {
-	 public enum Type
+    public enum Type
     {
         LINEAR,
         EASE_IN,
         EASE_OUT,
         SMOOTH_STEP
     }
-	private Dictionary<string, Coroutine> _activeCoroutines = new();
-	
-	public void Reach(float start, float target, float seconds, Type type, Action<float> onUpdate, float waitSeconds = 0)
-	{
-		StartCoroutine(ReachCoroutine(null, start, target, seconds, type, onUpdate, waitSeconds));
-	}
 
-	public void Reach(string id, float start, float target, float seconds, Type type, Action<float> onUpdate, float waitSeconds = 0)
+    private Dictionary<string, Coroutine> _activeCoroutines = new Dictionary<string, Coroutine>();
+
+    public void Reach(InterpolationInfo info)
     {
-        if (_activeCoroutines.TryGetValue(id, out Coroutine existingCoroutine))
-        {
-            StopCoroutine(existingCoroutine);
-        }
+    bool hasId = !string.IsNullOrEmpty(info.StringID);
 
-        _activeCoroutines[id] = StartCoroutine(ReachCoroutine(id, start, target, seconds, type, onUpdate, waitSeconds));
+        if (hasId && _activeCoroutines.TryGetValue(info.StringID, out var existingCoroutine))
+            StopCoroutine(existingCoroutine);
+
+        Coroutine newCoroutine = StartCoroutine(ReachCoroutine(info));
+
+        if (hasId)
+            _activeCoroutines[info.StringID] = newCoroutine;
+        
     }
 
-	private IEnumerator ReachCoroutine(string id, float start, float target, float seconds, Type type, Action<float> onUpdate, float waitSeconds)
+    private IEnumerator ReachCoroutine(InterpolationInfo info)
     {
-        if (waitSeconds > 0)
+        if (info.WaitSeconds > 0f)
         {
-            onUpdate?.Invoke(start);
-            yield return new WaitForSeconds(waitSeconds);
+            info.UpdateValue?.Invoke(info.StartValue);
+            yield return new WaitForSeconds(info.WaitSeconds);
         }
-        float elapsed = 0f;
 
-        while (elapsed < seconds)
+        float elapsed = 0f;
+        while (elapsed < info.Seconds)
         {
             elapsed += Time.deltaTime;
-            float t = Mathf.Clamp01(elapsed / seconds);
-            float easedT = ApplyEasing(t, type);
-            
-            onUpdate?.Invoke(Mathf.Lerp(start, target, easedT));
+            float t = Mathf.Clamp01(elapsed / info.Seconds);
+            float t2 = ApplyEasing(t, info.InterpolationType);
+            info.UpdateValue?.Invoke(Mathf.Lerp(info.StartValue, info.TargetValue, t2));
             yield return null;
         }
 
-        onUpdate?.Invoke(target);
+        info.UpdateValue?.Invoke(info.TargetValue);
+        info.OnInterpolationEnd?.Invoke(info.TargetValue);
+        if (!string.IsNullOrEmpty(info.StringID))
+            _activeCoroutines.Remove(info.StringID);
         
-		if (!string.IsNullOrEmpty(id))
-			_activeCoroutines.Remove(id);
-		
     }
 
     private float ApplyEasing(float t, Type type)
@@ -63,23 +74,23 @@ public class Interpolations : LazySingleton<Interpolations>
             Type.EASE_IN => t * t,
             Type.EASE_OUT => 1f - (1f - t) * (1f - t),
             Type.SMOOTH_STEP => t * t * (3f - 2f * t),
-            _ => t
+            _ => t,
         };
     }
-	
+
     public static float Damp(float source, float target, float seconds, float dt)
     {
-        float smoothing = Mathf.Pow(0.01f, 1 / seconds);
-        source = Mathf.Lerp(source, target, 1 - Mathf.Pow(smoothing, dt));
+        float f = Mathf.Pow(0.01f, 1f / seconds);
+        source = Mathf.Lerp(source, target, 1f - Mathf.Pow(f, dt));
         return source;
     }
 
     public static Vector3 Damp(Vector3 source, Vector3 target, float seconds, float dt)
     {
-        float smoothing = Mathf.Pow(0.01f, 1 / seconds);
-        source.x = Mathf.Lerp(source.x, target.x, 1 - Mathf.Pow(smoothing, dt));
-        source.y = Mathf.Lerp(source.y, target.y, 1 - Mathf.Pow(smoothing, dt));
-        source.z = Mathf.Lerp(source.z, target.z, 1 - Mathf.Pow(smoothing, dt));
+        float f = Mathf.Pow(0.01f, 1f / seconds);
+        source.x = Mathf.Lerp(source.x, target.x, 1f - Mathf.Pow(f, dt));
+        source.y = Mathf.Lerp(source.y, target.y, 1f - Mathf.Pow(f, dt));
+        source.z = Mathf.Lerp(source.z, target.z, 1f - Mathf.Pow(f, dt));
         return source;
     }
 }
