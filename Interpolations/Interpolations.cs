@@ -12,7 +12,7 @@ public struct InterpolationInfo
     public Action<float> UpdateValue;
     public float WaitSeconds;
     public Action<float> OnInterpolationEnd;
-    public string? StringID;
+    public string StringID;
 }
 
 public class Interpolations : LazySingleton<Interpolations>
