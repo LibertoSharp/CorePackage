@@ -1,9 +1,7 @@
 {
     "name": "LibertoCore.Editor",
     "rootNamespace": "",
-    "references": [
-        "GUID:77bcd60f25519934bb65bb152659b14d"
-    ],
+    "references": [],
     "includePlatforms": [
         "Editor"
     ],

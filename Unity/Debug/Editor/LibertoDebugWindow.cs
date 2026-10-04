@@ -3,43 +3,51 @@ using UnityEditor;
 using UnityEngine.UIElements;
 using System;
 using System.Collections.Generic;
+using System.Reflection;
 
 public class LibertoDebugWindow : EditorWindow
 {
-    private IVisualElementScheduledItem _updateSchedule;
+    private static LibertoDebugWindow _instance = null;
     private VisualTreeAsset _baseModel;
     private VisualTreeAsset _watchElement;
 
+    private static readonly List<(string Name, Func<object> Getter)> _exposedVariables = new();
     private readonly List<(Label ValueLabel, Func<object> Getter)> _activeWatches = new();
 
     private static readonly Color ColorDark = new Color(0.18f, 0.18f, 0.18f, 1f);
     private static readonly Color ColorGray = new Color(0.24f, 0.24f, 0.24f, 1f);
 
-    private void OnEnable()
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
+    private static void AutoInitialize()
     {
-        EditorApplication.playModeStateChanged += OnPlayModeStateChanged;
-    }
+        #if UNITY_EDITOR
+        _exposedVariables.Clear();
 
-    private void OnDisable()
-    {
-        EditorApplication.playModeStateChanged -= OnPlayModeStateChanged;
-        _updateSchedule?.Pause();
-    }
+        MonoBehaviour[] sceneActive = FindObjectsByType<MonoBehaviour>();
 
-    private void OnPlayModeStateChanged(PlayModeStateChange state)
-    {
-        if (state == PlayModeStateChange.ExitingPlayMode || state == PlayModeStateChange.EnteredEditMode)
-        {
-            _updateSchedule?.Pause();
-            _activeWatches.Clear();
+	    foreach (MonoBehaviour mono in sceneActive) {
+            FieldInfo[] objectFields = mono.GetType().GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static);
+		    foreach(FieldInfo field in objectFields)
+            {
+                if (!field.IsDefined(typeof(ExposedFieldAttribute), inherit: true))
+                    continue;
+
+                _exposedVariables.Add((field.Name, () => field.GetValue(mono)));
+            }
         }
+
+        if (_exposedVariables.Count > 0)
+            ShowWindow();
+        else
+            _instance?.Close();
+        #endif
     }
 
     public static void ShowWindow()
     {
-        LibertoDebugWindow wnd = GetWindow<LibertoDebugWindow>();
-        wnd.titleContent = new GUIContent("Liberto Debug");
-        wnd.RebuildUI();
+        _instance = GetWindow<LibertoDebugWindow>();
+        _instance.titleContent = new GUIContent("Liberto Debug");
+        _instance.RebuildUI();
     }
 
     public void CreateGUI()
@@ -47,7 +55,7 @@ public class LibertoDebugWindow : EditorWindow
         RebuildUI();
 
         _activeWatches.Clear();
-        _updateSchedule = rootVisualElement.schedule.Execute(() =>
+        rootVisualElement.schedule.Execute(() =>
             {
                 foreach (var (label, getter) in _activeWatches)
                 {
@@ -78,7 +86,7 @@ public class LibertoDebugWindow : EditorWindow
             return;
 
         int index = 0;
-        foreach ((string Name, Func<object> Getter) watch in LibertoDebug.Instance.Watches)
+        foreach ((string Name, Func<object> Getter) watch in _exposedVariables)
         {
             VisualElement watchInstance = _watchElement.Instantiate();
 
