@@ -23,7 +23,11 @@ public class LibertoDebugWindow : EditorWindow
         #if UNITY_EDITOR
         _exposedVariables.Clear();
 
-        MonoBehaviour[] sceneActive = FindObjectsByType<MonoBehaviour>();
+        #if UNITY_2022_2_OR_NEWER
+            MonoBehaviour[] sceneActive = FindObjectsByType<MonoBehaviour>(FindObjectsSortMode.None);
+        #else
+            MonoBehaviour[] sceneActive = FindObjectsOfType<MonoBehaviour>();
+        #endif
 
 	    foreach (MonoBehaviour mono in sceneActive) {
             FieldInfo[] objectFields = mono.GetType().GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static);
@@ -41,6 +45,26 @@ public class LibertoDebugWindow : EditorWindow
         else
             _instance?.Close();
         #endif
+    }
+
+    private void OnEnable()
+    {
+        EditorApplication.playModeStateChanged += OnPlayModeStateChanged;
+    }
+
+    private void OnDisable()
+    {
+        EditorApplication.playModeStateChanged -= OnPlayModeStateChanged;
+    }
+
+    private void OnPlayModeStateChanged(PlayModeStateChange state)
+    {
+        if (state == PlayModeStateChange.ExitingPlayMode)
+        {
+            _exposedVariables.Clear();
+            _activeWatches.Clear();
+            rootVisualElement.Clear(); 
+        }
     }
 
     public static void ShowWindow()
