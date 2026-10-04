@@ -1,6 +1,6 @@
 {
   "name": "com.liberto.core",
-  "version": "26.10.2",
+  "version": "26.10.3",
   "displayName": "Liberto Core",
   "description": "Shared scripts across projects",
   "unity": "6000.3",

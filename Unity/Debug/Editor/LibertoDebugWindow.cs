@@ -23,10 +23,10 @@ public class LibertoDebugWindow : EditorWindow
         #if UNITY_EDITOR
         _exposedVariables.Clear();
 
-        #if UNITY_2022_2_OR_NEWER
-            MonoBehaviour[] sceneActive = FindObjectsByType<MonoBehaviour>(FindObjectsSortMode.None);
+        #if UNITY_6000_4_OR_NEWER
+            MonoBehaviour[] sceneActive = FindObjectsByType<MonoBehaviour>();
         #else
-            MonoBehaviour[] sceneActive = FindObjectsOfType<MonoBehaviour>();
+            MonoBehaviour[] sceneActive = FindObjectsByType<MonoBehaviour>(FindObjectsSortMode.None);
         #endif
 
 	    foreach (MonoBehaviour mono in sceneActive) {
