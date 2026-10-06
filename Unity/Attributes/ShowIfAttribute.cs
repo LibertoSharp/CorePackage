@@ -1,6 +1,8 @@
+using System;
 using UnityEngine;
 
 [System.Diagnostics.Conditional("UNITY_EDITOR")]
+[AttributeUsage(AttributeTargets.Field)]
 public class ShowIfAttribute : PropertyAttribute
 {
     public enum Operator { Equals, NotEquals, Greater, Less, GreaterOrEqual, LessOrEqual }

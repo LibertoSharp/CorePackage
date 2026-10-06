@@ -17,7 +17,8 @@ public class LazySingleton<T> : MonoBehaviour where T : LazySingleton<T>
                 return _instance;
 
             _instance = new GameObject(typeof(T).Name).AddComponent<T>();
-            _instance.gameObject.hideFlags = HideFlags.HideAndDontSave;
+            // Not HideAndDontSave: those objects survive exiting play mode and leak one per play session in the editor
+            _instance.gameObject.hideFlags = HideFlags.HideInHierarchy;
             DontDestroyOnLoad(_instance);
             return _instance;
         }

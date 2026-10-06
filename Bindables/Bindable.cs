@@ -30,4 +30,6 @@ public class Bindable<T>
         Value = value;
         _locked = true;
     }
+
+    public override string ToString() => _value?.ToString() ?? "null";
 }
